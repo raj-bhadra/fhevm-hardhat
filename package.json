@@ -26,6 +26,7 @@
   "dependencies": {
     "@fhevm/solidity": "^0.8.0",
     "@openzeppelin/confidential-contracts": "^0.3.0-rc.0",
+    "@openzeppelin/contracts": "^5.4.0",
     "@zama-fhe/oracle-solidity": "^0.1.0",
     "encrypted-types": "^0.0.4"
   },
