@@ -1,25 +1,35 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { SepoliaConfig } from "@fhevm/solidity/config/ZamaConfig.sol";
-import { ERC7984 } from "@openzeppelin/confidential-contracts/token/ERC7984/ERC7984.sol";
+import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
+import {ERC7984} from "@openzeppelin/confidential-contracts/token/ERC7984/ERC7984.sol";
+import {
+    ERC7984ObserverAccess
+} from "@openzeppelin/confidential-contracts/token/ERC7984/extensions/ERC7984ObserverAccess.sol";
 import {FHE, externalEuint64, euint64} from "@fhevm/solidity/lib/FHE.sol";
 
-contract ConfidentialToken is SepoliaConfig, ERC7984 {
+contract ConfidentialToken is SepoliaConfig, ERC7984ObserverAccess {
     constructor(
         string memory name,
         string memory symbol,
         string memory contractURI
-    ) ERC7984(name, symbol, contractURI) {
+    ) ERC7984(name, symbol, contractURI) {}
+
+    function mint(address to, externalEuint64 amount, bytes calldata inputProof) external returns (euint64) {
+        euint64 encryptedAmount = FHE.fromExternal(amount, inputProof);
+        return _mint(to, encryptedAmount);
     }
 
-    function mint(address to, externalEuint64 amount, bytes calldata inputProof) external {
-        euint64 encryptedAmount = FHE.fromExternal(amount, inputProof);
-        _mint(to, encryptedAmount);
+    function mint(address to, euint64 amount) external returns (euint64) {
+        return _mint(to, amount);
     }
 
-    function burn(externalEuint64 amount, bytes calldata inputProof) external {
+    function burn(address from, externalEuint64 amount, bytes calldata inputProof) external returns (euint64) {
         euint64 encryptedAmount = FHE.fromExternal(amount, inputProof);
-        _burn(msg.sender, encryptedAmount);
+        return _burn(from, encryptedAmount);
+    }
+
+    function burn(address from, euint64 amount) external returns (euint64) {
+        return _burn(from, amount);
     }
 }
