@@ -21,7 +21,7 @@ async function deployFixture() {
   return { confidentialTokenContract, confidentialTokenAddress };
 }
 
-describe("ConfidentialTokenFactory", function () {
+describe("ConfidentialToken", function () {
   let signers: Signers;
   let confidentialTokenContract: ConfidentialToken;
   let confidentialTokenAddress: string;
@@ -49,7 +49,9 @@ describe("ConfidentialTokenFactory", function () {
       .encrypt();
     const tx = await confidentialTokenContract
       .connect(signers.alice)
-      .mint(signers.alice.address, encryptedMintAmount.handles[0], encryptedMintAmount.inputProof);
+      [
+        "mint(address,bytes32,bytes)"
+      ](signers.alice.address, encryptedMintAmount.handles[0], encryptedMintAmount.inputProof);
     await tx.wait();
     const balance = await confidentialTokenContract.confidentialBalanceOf(signers.alice.address);
     const clearBalance = await fhevm.userDecryptEuint(
@@ -69,7 +71,9 @@ describe("ConfidentialTokenFactory", function () {
       .encrypt();
     const txMint = await confidentialTokenContract
       .connect(signers.alice)
-      .mint(signers.alice.address, encryptedMintAmount.handles[0], encryptedMintAmount.inputProof);
+      [
+        "mint(address,bytes32,bytes)"
+      ](signers.alice.address, encryptedMintAmount.handles[0], encryptedMintAmount.inputProof);
     await txMint.wait();
     const burnAmount = 500;
     const encryptedBurnAmount = await fhevm
@@ -78,7 +82,9 @@ describe("ConfidentialTokenFactory", function () {
       .encrypt();
     const txBurn = await confidentialTokenContract
       .connect(signers.alice)
-      .burn(encryptedBurnAmount.handles[0], encryptedBurnAmount.inputProof);
+      [
+        "burn(address,bytes32,bytes)"
+      ](signers.alice.address, encryptedBurnAmount.handles[0], encryptedBurnAmount.inputProof);
     await txBurn.wait();
     const balance = await confidentialTokenContract.confidentialBalanceOf(signers.alice.address);
     const clearBalance = await fhevm.userDecryptEuint(
