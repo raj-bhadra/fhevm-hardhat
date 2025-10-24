@@ -77,32 +77,52 @@ describe("ConfidentialTokenWrapper", function () {
     expect(clearBalance).to.eq(BigInt(1e6));
   });
 
-  //   it("should be able to burn tokens", async function () {
-  //     const mintAmount = 1000;
-  //     const encryptedMintAmount = await fhevm
-  //       .createEncryptedInput(confidentialTokenAddress, signers.alice.address)
-  //       .add64(mintAmount)
-  //       .encrypt();
-  //     const txMint = await confidentialTokenContract
-  //       .connect(signers.alice)
-  //       .mint(signers.alice.address, encryptedMintAmount.handles[0], encryptedMintAmount.inputProof);
-  //     await txMint.wait();
-  //     const burnAmount = 500;
-  //     const encryptedBurnAmount = await fhevm
-  //       .createEncryptedInput(confidentialTokenAddress, signers.alice.address)
-  //       .add64(burnAmount)
-  //       .encrypt();
-  //     const txBurn = await confidentialTokenContract
-  //       .connect(signers.alice)
-  //       .burn(encryptedBurnAmount.handles[0], encryptedBurnAmount.inputProof);
-  //     await txBurn.wait();
-  //     const balance = await confidentialTokenContract.confidentialBalanceOf(signers.alice.address);
-  //     const clearBalance = await fhevm.userDecryptEuint(
-  //       FhevmType.euint64,
-  //       balance,
-  //       confidentialTokenAddress,
-  //       signers.alice,
-  //     );
-  //     expect(clearBalance).to.eq(mintAmount - burnAmount);
-  //   });
+  it("should be able to unwrap tokens", async function () {
+    const wrapAmount = BigInt(1e18);
+    // lesser due to uint64 being used in erc 7984 tokens
+    const expectedWrappedBalance = BigInt(1e6);
+    const transferTx = await underlying.transfer(signers.alice.address, wrapAmount);
+    await transferTx.wait();
+    // approve wrapper to spend using alice
+    const approveTx = await underlying.connect(signers.alice).approve(confidentialTokenWrapperAddress, wrapAmount);
+    await approveTx.wait();
+    // wrap tokens using alice
+    const wrapTx = await confidentialTokenWrapperContract
+      .connect(signers.alice)
+      .wrap(signers.alice.address, wrapAmount);
+    await wrapTx.wait();
+    // get balance of alice
+    const balance = await confidentialTokenWrapperContract
+      .connect(signers.alice)
+      .confidentialBalanceOf(signers.alice.address);
+    const clearBalance = await fhevm.userDecryptEuint(
+      FhevmType.euint64,
+      balance,
+      confidentialTokenWrapperAddress,
+      signers.alice,
+    );
+    expect(clearBalance).to.eq(expectedWrappedBalance);
+    const unwrapAmount = BigInt(1e3);
+    const encryptedUnwrapAmount = await fhevm
+      .createEncryptedInput(confidentialTokenWrapperAddress, signers.alice.address)
+      .add64(unwrapAmount)
+      .encrypt();
+    const unwrapTx = await confidentialTokenWrapperContract
+      .connect(signers.alice)
+      [
+        "unwrap(address,address,bytes32,bytes)"
+      ](signers.alice.address, signers.alice.address, encryptedUnwrapAmount.handles[0], encryptedUnwrapAmount.inputProof);
+    await unwrapTx.wait();
+    // get balance of alice
+    const balanceAfterUnwrap = await confidentialTokenWrapperContract
+      .connect(signers.alice)
+      .confidentialBalanceOf(signers.alice.address);
+    const clearBalanceAfterUnwrap = await fhevm.userDecryptEuint(
+      FhevmType.euint64,
+      balanceAfterUnwrap,
+      confidentialTokenWrapperAddress,
+      signers.alice,
+    );
+    expect(clearBalanceAfterUnwrap).to.eq(expectedWrappedBalance - unwrapAmount);
+  });
 });
