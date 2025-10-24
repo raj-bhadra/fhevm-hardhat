@@ -7,17 +7,14 @@ import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 /// @title ERC7984Factory
 /// @notice Factory contract for creating ERC7984 instances
 contract ConfidentialTokenFactory is SepoliaConfig {
-
     address[] public _tokenAddresses;
     event TokenCreated(address indexed tokenAddress);
+    mapping(address => bool) public isTokenRegistered;
 
-    function createToken(
-        string memory name,
-        string memory symbol,
-        string memory contractURI
-    ) external {
+    function createToken(string memory name, string memory symbol, string memory contractURI) external {
         ConfidentialToken token = new ConfidentialToken(name, symbol, contractURI);
         _tokenAddresses.push(address(token));
+        isTokenRegistered[address(token)] = true;
         emit TokenCreated(address(token));
     }
 
@@ -25,4 +22,7 @@ contract ConfidentialTokenFactory is SepoliaConfig {
         return _tokenAddresses;
     }
 
+    function isConfidentialTokenRegistered(address tokenAddress) external view returns (bool) {
+        return isTokenRegistered[tokenAddress];
+    }
 }
