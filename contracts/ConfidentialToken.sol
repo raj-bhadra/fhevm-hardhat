@@ -10,12 +10,18 @@ import {FHE, externalEuint64, euint64} from "@fhevm/solidity/lib/FHE.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract ConfidentialToken is SepoliaConfig, ERC7984ObserverAccess, Ownable {
+    address public _creator;
     constructor(
         address owner,
         string memory name,
         string memory symbol,
         string memory contractURI
     ) ERC7984(name, symbol, contractURI) Ownable(owner) {
+        _creator = owner;
+    }
+
+    function getCreator() external view returns (address) {
+        return _creator;
     }
 
     function mint(address to, externalEuint64 amount, bytes calldata inputProof) onlyOwner external returns (euint64) {
