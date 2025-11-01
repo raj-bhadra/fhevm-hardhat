@@ -40,6 +40,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
   });
   console.log(`ZBondingCurve contract: `, deployedZBondingCurve.address);
+
+  await (
+    await (
+      await hre.ethers.getContractAt("ConfidentialTokenFactory", deployedConfidentialTokenFactory.address)
+    ).setZBondingCurve(deployedZBondingCurve.address)
+  ).wait();
+  console.log(`ZBondingCurve set to ConfidentialTokenFactory`);
 };
 export default func;
 func.id = "deploy_assets"; // id required to prevent reexecution

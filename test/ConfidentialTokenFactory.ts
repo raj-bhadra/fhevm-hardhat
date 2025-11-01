@@ -1,11 +1,15 @@
 import { ethers, fhevm } from "hardhat";
 import { ConfidentialTokenFactory, ConfidentialTokenFactory__factory } from "../types";
 import { expect } from "chai";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 async function deployFixture() {
+  const ethSigners: HardhatEthersSigner[] = await ethers.getSigners();
+  const signers = { deployer: ethSigners[0], alice: ethSigners[1], bob: ethSigners[2] };
   const factory = (await ethers.getContractFactory("ConfidentialTokenFactory")) as ConfidentialTokenFactory__factory;
   const confidentialTokenFactoryContract = (await factory.deploy()) as ConfidentialTokenFactory;
   const confidentialTokenFactoryAddress = await confidentialTokenFactoryContract.getAddress();
+  await (await confidentialTokenFactoryContract.connect(signers.deployer).setZBondingCurve(signers.bob.address)).wait();
   return { confidentialTokenFactoryContract, confidentialTokenFactoryAddress };
 }
 

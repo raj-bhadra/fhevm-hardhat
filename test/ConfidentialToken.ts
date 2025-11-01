@@ -15,8 +15,15 @@ const symbol = "TT";
 const contractURI = "https://test.com";
 
 async function deployFixture() {
+  const ethSigners: HardhatEthersSigner[] = await ethers.getSigners();
+  const signers = { deployer: ethSigners[0], alice: ethSigners[1], bob: ethSigners[2] };
   const factory = (await ethers.getContractFactory("ConfidentialToken")) as ConfidentialToken__factory;
-  const confidentialTokenContract = (await factory.deploy(name, symbol, contractURI)) as ConfidentialToken;
+  const confidentialTokenContract = (await factory.deploy(
+    signers.alice.address,
+    name,
+    symbol,
+    contractURI,
+  )) as ConfidentialToken;
   const confidentialTokenAddress = await confidentialTokenContract.getAddress();
   return { confidentialTokenContract, confidentialTokenAddress };
 }

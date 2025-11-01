@@ -3,13 +3,16 @@ pragma solidity ^0.8.24;
 
 import {ConfidentialToken} from "./ConfidentialToken.sol";
 import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ZBondingCurve} from "./ZBondingCurve.sol";
 
 /// @title ERC7984Factory
 /// @notice Factory contract for creating ERC7984 instances
-contract ConfidentialTokenFactory is SepoliaConfig {
+contract ConfidentialTokenFactory is SepoliaConfig, Ownable {
     address[] public _tokenAddresses;
     event TokenCreated(address indexed tokenAddress);
     mapping(address => bool) public isTokenRegistered;
+    ZBondingCurve public zBondingCurve;
     struct TokenInfo {
         address createdBy;
         string name;
@@ -20,8 +23,14 @@ contract ConfidentialTokenFactory is SepoliaConfig {
     TokenInfo[] public tokenInfos;
     mapping(address => TokenInfo[]) public tokenInfosByCreatorAddress;
 
+    constructor() Ownable(msg.sender) {}
+
+    function setZBondingCurve(ZBondingCurve _zBondingCurve) external onlyOwner {
+        zBondingCurve = _zBondingCurve;
+    }
+
     function createToken(string memory name, string memory symbol, string memory contractURI) external {
-        ConfidentialToken token = new ConfidentialToken(name, symbol, contractURI);
+        ConfidentialToken token = new ConfidentialToken(address(zBondingCurve), name, symbol, contractURI);
         _tokenAddresses.push(address(token));
         isTokenRegistered[address(token)] = true;
         tokenInfos.push(

@@ -19,6 +19,8 @@ const baseAssetTokenSymbol = "BASE";
 const baseAssetTokenContractURI = "https://base.com";
 
 async function deployFixture() {
+  const ethSigners: HardhatEthersSigner[] = await ethers.getSigners();
+  const signers = { deployer: ethSigners[0], alice: ethSigners[1], bob: ethSigners[2] };
   const usdcFactory = (await ethers.getContractFactory("USDC")) as USDC__factory;
   const usdcContract = (await usdcFactory.deploy()) as USDC;
   const usdcContractAddress = await usdcContract.getAddress();
@@ -35,6 +37,17 @@ async function deployFixture() {
   const confidentialTokenFactoryContract = (await confidentialTokenFactoryFactory.deploy()) as ConfidentialTokenFactory;
   const confidentialTokenFactoryContractAddress = await confidentialTokenFactoryContract.getAddress();
 
+  const zBondingCurveFactory = (await ethers.getContractFactory("ZBondingCurve")) as ZBondingCurve__factory;
+  const zBondingCurveContract = (await zBondingCurveFactory.deploy(
+    zUsdcContract,
+    confidentialTokenFactoryContract,
+  )) as ZBondingCurve;
+  const zBondingCurveContractAddress = await zBondingCurveContract.getAddress();
+
+  await (
+    await confidentialTokenFactoryContract.connect(signers.deployer).setZBondingCurve(zBondingCurveContractAddress)
+  ).wait();
+
   const txResponse = await confidentialTokenFactoryContract.createToken(
     baseAssetTokenName,
     baseAssetTokenSymbol,
@@ -44,13 +57,6 @@ async function deployFixture() {
   const tokenAddresses = await confidentialTokenFactoryContract.getTokenAddresses();
   const baseAssetTokenContractAddress = tokenAddresses[0];
   const baseAssetTokenContract = await ethers.getContractAt("ConfidentialToken", baseAssetTokenContractAddress);
-
-  const zBondingCurveFactory = (await ethers.getContractFactory("ZBondingCurve")) as ZBondingCurve__factory;
-  const zBondingCurveContract = (await zBondingCurveFactory.deploy(
-    zUsdcContract,
-    confidentialTokenFactoryContract,
-  )) as ZBondingCurve;
-  const zBondingCurveContractAddress = await zBondingCurveContract.getAddress();
 
   return {
     usdcContract,
