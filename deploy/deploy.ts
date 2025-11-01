@@ -41,12 +41,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   console.log(`ZBondingCurve contract: `, deployedZBondingCurve.address);
 
+  // set zbondingcurve address in confidential token factory
   await (
     await (
       await hre.ethers.getContractAt("ConfidentialTokenFactory", deployedConfidentialTokenFactory.address)
     ).setZBondingCurve(deployedZBondingCurve.address)
   ).wait();
   console.log(`ZBondingCurve set to ConfidentialTokenFactory`);
+
+  // get zbondingcurve address from confidential token factory
+  const zBondingCurveAddress = await (
+    await hre.ethers.getContractAt("ConfidentialTokenFactory", deployedConfidentialTokenFactory.address)
+  ).zBondingCurve();
+  console.log(`ZBondingCurve address from confidential token factory: `, zBondingCurveAddress);
 };
 export default func;
 func.id = "deploy_assets"; // id required to prevent reexecution
